@@ -1,29 +1,33 @@
 function [U, V, Z, C, S] = CSD (Q1, Q2)
-
+    Q1
+    Q2
     [m, n]  = size(Q1);
     [p, x_] = size(Q2);
 
     % Step 1.
-    q1 = min(m, n);
-    q2 = min(p, n);
+    q1 = min(m, n)
+    q2 = min(p, n)
 
     % TODO: Step 2 if m > p then swap Q1 and Q2 etc. etc.
 
     % Step 3
-    [U, S, Z] = svd(Q2);
+    [U, S, Z] = svd(Q2)
 
     % TODO: This looks like it needs more work, especially if p > n.
-    Sx = S(1:q2, 1:q2)
+    % TODO: Is this part of step 4????
+    Sx = S(1:q2, 1:q2);
     Sx = [zeros(q2, n - q2), Sx];
 
     S = Sx
 
     % Step 4 (Matlab (and Octave) generate values in decreasing order and so we need to reverse them).
+    % Also need to flip the columns of U and Z.
     % TODO: What if S is not square (it is n X p).
-    % TODO: Do we need to flip U and Z as well????
     % TODO: Maybe we can modify the algorithm to avoid this flipping?
     flip = fliplr(eye(size(S)));
     S = flip * S * flip
+    U = U * flip
+    Z = Z * flip
 
     % Step 5
     Sdiag = diag(S)'
@@ -34,24 +38,31 @@ function [U, V, Z, C, S] = CSD (Q1, Q2)
     [V, R] = qr( Q1 * Z )
 
     % Step 7
-    index = n - q2 + k + 1
-    t = q2 + q1 - n - k
-    R_33 = R(:,index:index+t-1)
+    r33_index = n - q2 + k + 1;
+    t = q2 + q1 - n - k;
+    R_33 = R(r33_index:r33_index+t-1,r33_index:r33_index+t-1)
 
     % Step 8
-    [Ur, Cr, Zr] = svd(R_33);
+    [Ur, Cr, Zr] = svd(R_33)
 
     % Step 9
+    % TODO: I don't think this is right...
     S = [zeros(n - q2), S]
-    %  TODO: Work in progress!!!
-    C = Cr % [R(n - q2 + k:n - q2 + k), Cr, zeros(n - q1)]
+
+    r22_index = n - q2 + 1;
+    R_22 = R(r22_index:r22_index+k-1,r22_index:r22_index+k-1)
+    C_bar = [R_22,zeros(k,length(Cr));zeros(length(Cr),k), Cr]
+    C = [eye(n-q2),zeros(n-q2,k+t),zeros(n-q2,n-q1); zeros(k+t,n-q2),C_bar,zeros(k+t,n-q1); zeros(m-q1,n-q2),zeros(m-q1,k+t),zeros(m-q1,n-q1)]
 
     % Step 10
-    % TODO: Not working!
-    U(:, q1 + 1 - t:q1) = U(:, q1 + 1 - t:q1) * Ur
+    % Paper says this: U(:, q1 + 1 - t:q1) = U(:, q1 + 1 - t:q1) * Ur
+    % But page 10 looks more like this:
+    U(n-q2+k+1:n-q2+k+t, n-q2+k+1:n-q2+k+t) = U(n-q2+k+1:n-q2+k+t, n-q2+k+1:n-q2+k+t) * Ur
 
     % Step 11
-    Z(:,n + 1 - t:n) = Z(:,n + 1 - t:n) * Zr
+    % Paper says this: Z(:,n + 1 - t:n) = Z(:,n + 1 - t:n) * Zr
+    % But page 10 looks more like this:
+    Z(n + 1 - t:n,n + 1 - t:n) = Z(n + 1 - t:n,n + 1 - t:n) * Zr
 
     % Step 12
     % TODO: Have I got the rows and columns the right way around?
@@ -63,6 +74,7 @@ function [U, V, Z, C, S] = CSD (Q1, Q2)
     [Vw, Sbar2] = qr(W)
 
     % Step 14
-    V(:,q2 + 1 - t:q2)
-    V(:,q2 + 1 - t:q2) = V(:,q2 + 1 - t:q2) * Vw
+    % Paper says this: V(:,q2 + 1 - t:q2) = V(:,q2 + 1 - t:q2) * Vw
+    % But page 11 looks more like this:
+    V(n-q1+k+1:n-q1+k+t, n-q1+k+1:n-q1+k+t) = V(n-q1+k+1:n-q1+k+t, n-q1+k+1:n-q1+k+t) * Vw
 end
