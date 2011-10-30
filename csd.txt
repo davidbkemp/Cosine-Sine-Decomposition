@@ -3,84 +3,67 @@ function [U, V, Z, C, S] = CSD (Q1, Q2)
     [m, n]  = size(Q1);
     [p, x_] = size(Q2);
 
-    [U, S, Zt] = svd(Q2);
-    Ut = U';
-    Z = Zt';
-
+    % Step 1.
     q1 = min(m, n);
     q2 = min(p, n);
 
-    Sx = [];
+    % TODO: Step 2 if m > p then swap Q1 and Q2 etc. etc.
 
-    for k = 1:q2
-        Sx = [Sx, S(:, k)];
-    end
+    % Step 3
+    [U, S, Zt] = svd(Q2);
+    Z = Zt';
 
+    % TODO: This looks like it needs more work, especially if p > n.
+    Sx = S(1:q2, 1:q2)
     Sx = [zeros(q2, n - q2), Sx];
 
-    %
-    % display S
-    %
     S = Sx
 
+    % Step 4 (Matlab (and Octave) generate values in decreasing order and so we need to reverse them).
+    % TODO: What if S is not square (it is n X p).
+    % TODO: Do we need to flip U and Z as well????
+    % TODO: Maybe we can modify the algorithm to avoid this flipping?
     flip = fliplr(eye(size(S)));
     S = flip * S * flip
 
-    S
-
-    k = 0;
-
+    % Step 5
     Sdiag = diag(S)'
-    for i = 1:size(Sdiag)
-        Sdiag(i)
-        if( Sdiag(i) < (1/sqrt(2)) )
-            k = i
-            break
-        end
-    end
+    k = find(Sdiag > (1/sqrt(2)), 1) - 1
 
-    [Vt, R] = qr( Q1 * Z )
-    V = Vt';
+    % Step 6
+    % NOTE: Originally had Vt here, but I think that was wrong???
+    [V, R] = qr( Q1 * Z )
 
-    n;
-    q1;
-    q2;
-    k;
-
+    % Step 7
     index = n - q2 + k + 1
     t = q2 + q1 - n - k
+    R_33 = R(:,index:index+t-1)
 
-    i = 0;
-    R_33 = [];
-    while i < t
-        R_33 = [R_33, R(:,index + i)];
-        i = i + 1;
-    end
-
+    % Step 8
     [Ur, Cr, Ztr] = svd(R_33);
+    Zr = Ztr'
+
+    % Step 9
     S = [zeros(n - q2), S]
-    n - q2 + k;
-    n - q2 + k;
-    n - q1;
+    %  TODO: Work in progress!!!
     C = Cr % [R(n - q2 + k:n - q2 + k), Cr, zeros(n - q1)]
 
-    U(:, q1 + 1 - t:q1) = U(:, q1 + 1 - t:q1) * Ztr'
-    Z(:,n + 1 - t:n) = Z(:,n + 1 - t:n) * Ztr'
+    % Step 10
+    % TODO: Not working!
+    U(:, q1 + 1 - t:q1) = U(:, q1 + 1 - t:q1) * Ur
 
-    i = 0;
-    Sbar = [];
-    while i < t
-        Sbar = [Sbar, R(:,i + 1)]
-        i = i + 1;
-    end
+    % Step 11
+    Z(:,n + 1 - t:n) = Z(:,n + 1 - t:n) * Zr
 
-    W = Sbar * Ztr'
+    % Step 12
+    % TODO: Have I got the rows and columns the right way around?
+    Sbar = S(p-t+1:p, n-t+1:n)
+    W = Sbar * Zr
 
-    [Vw, R] = qr(W)
-    q2 + 1 - t
-    q2 + 1 - t
-    q2
-    Vw
+    % Step 13
+    [Vw, Sbar2] = qr(W)
+
+    % Step 14
     V(:,q2 + 1 - t:q2)
     V(:,q2 + 1 - t:q2) = V(:,q2 + 1 - t:q2) * Vw
 end
