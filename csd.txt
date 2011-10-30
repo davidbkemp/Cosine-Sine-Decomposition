@@ -10,8 +10,7 @@ function [U, V, Z, C, S] = CSD (Q1, Q2)
     % TODO: Step 2 if m > p then swap Q1 and Q2 etc. etc.
 
     % Step 3
-    [U, S, Zt] = svd(Q2);
-    Z = Zt';
+    [U, S, Z] = svd(Q2);
 
     % TODO: This looks like it needs more work, especially if p > n.
     Sx = S(1:q2, 1:q2)
@@ -40,8 +39,7 @@ function [U, V, Z, C, S] = CSD (Q1, Q2)
     R_33 = R(:,index:index+t-1)
 
     % Step 8
-    [Ur, Cr, Ztr] = svd(R_33);
-    Zr = Ztr'
+    [Ur, Cr, Zr] = svd(R_33);
 
     % Step 9
     S = [zeros(n - q2), S]
@@ -61,6 +59,7 @@ function [U, V, Z, C, S] = CSD (Q1, Q2)
     W = Sbar * Zr
 
     % Step 13
+    % Sbar and Sbar2 should actually be equal after this step!
     [Vw, Sbar2] = qr(W)
 
     % Step 14
